@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import List from "./views/ListView.vue";
+import Navigation from "./components/Navigation.vue";
 </script>
 
 <template>
-  <List />
+  <Navigation />
+  <br />
+  <RouterView />
 </template>
 
 <style scoped></style>

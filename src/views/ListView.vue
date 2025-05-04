@@ -1,14 +1,43 @@
 <script setup lang="ts">
-import { onMounted, watch } from "vue";
+import { watch } from "vue";
 import Pagination from "../components/Pagination.vue";
 import { usePostsData } from "../composables/usePostsData";
 import Search from "../components/Search.vue";
 import { useLoadingStore } from "../stores/useLoadingStore";
-
-const { posts, error, fetchPosts, currentPage, pagesCount, query } =
-  usePostsData();
+import { ref } from "vue";
+import { useRoute } from "vue-router";
+import { usePagination } from "../composables/usePagination";
+const route = useRoute();
 
 const loadingStore = useLoadingStore();
+
+const currentPage = ref<number>(Number(route.query._page) || 1);
+const limit = ref<number>(5);
+
+const query = ref<string>(String(route.query.q) || "");
+
+const { posts, error, fetchPosts, pagesCount } = usePostsData(
+  currentPage,
+  limit,
+  query
+);
+
+const { updateParams, syncFromRoute } = usePagination(
+  pagesCount,
+  currentPage,
+  query
+);
+
+function handlePageChange(page: number) {
+  currentPage.value = page;
+  updateParams();
+}
+
+function handleSearch(q: string) {
+  currentPage.value = 1;
+  query.value = q;
+  updateParams();
+}
 
 async function updateView() {
   loadingStore.loading = true;
@@ -16,18 +45,14 @@ async function updateView() {
   loadingStore.loading = false;
 }
 
-onMounted(updateView);
-
-watch([query, currentPage], updateView);
-
-function handlePageChange(page: number) {
-  currentPage.value += page;
-}
-
-function handleSearch(q: string) {
-  currentPage.value = 1;
-  query.value = q;
-}
+watch(
+  () => route.fullPath,
+  () => {
+    syncFromRoute();
+    updateView();
+  },
+  { immediate: true }
+);
 </script>
 
 <template>
